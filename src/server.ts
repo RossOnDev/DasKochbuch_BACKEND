@@ -9,11 +9,15 @@ import dotenv from "dotenv";
 import {RouterManager} from "@routes/RouterManager";
 import cookieParser from "cookie-parser";
 import {AuthMiddleware} from "@middlewares/AuthMiddleware";
+import * as http from "http";
+import * as https from "https";
+
 
 dotenv.config();
 
 const app: Application = express();
-const port = process.env.PORT;
+const httpPort = process.env.HTTP_PORT || 80;
+const httpsPort = process.env.HTTPS_PORT || 443;
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json({limit: process.env.JSON_LIMIT}));
@@ -34,8 +38,30 @@ const routerManager = new RouterManager();
 app.use("/api", routerManager.router);
 app.use(routerManager.defaultFallback);
 
+// HTTP REDIRECT
+const httpRedirectApp = express();
+httpRedirectApp.use((req, res) => {
+	res.redirect('https://' + req.hostname + req.originalUrl);
+});
+
+
+
 
 // Start Server
-app.listen(port, () => {
-	console.log(`✨  Starting API listening on http://localhost:${port}/`);
-})
+if (process.env.MODE === "DEV") {
+	app.listen(httpPort, () => {
+		console.log(`✨  Started HTTPS Server listening on http://localhost:${httpPort}/`);
+	})
+}
+else {
+	const httpServer = http.createServer(httpRedirectApp);
+	const httpsServer = https.createServer({}, app);
+
+	httpServer.listen(httpPort, () => {
+		console.log(`✨  Started HTTP Server listening on http://localhost:${httpPort}/`);
+	});
+	httpsServer.listen(httpsPort, () => {
+		console.log(`✨  Started HTTPS Server listening on https://localhost:${httpsPort}/`);
+	})
+}
+
