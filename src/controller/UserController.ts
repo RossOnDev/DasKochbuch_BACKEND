@@ -93,8 +93,9 @@ export class UserController {
 	public static async deleteUser(req: Request, res: Response, next: NextFunction) {
 		try {
 			const userId = req.params.id;
-			await UserController.USER_REPOSITORY.deleteUser(userId);
+			const hardDelete = req.query.force ? (req.query.force as string).toLowerCase() === "true" : false;
 
+			await UserController.USER_REPOSITORY.deleteUser(userId, hardDelete);
 			res.sendStatus(StatusCodes.OK);
 		} catch (error: any) {
 			next(error)

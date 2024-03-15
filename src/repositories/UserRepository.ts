@@ -103,9 +103,13 @@ export class UserRepository {
 		}
 	}
 
-	public async deleteUser(userId: string) {
+	public async deleteUser(userId: string, hard: boolean = false) {
 		try {
-			return await this.repository.softDelete(userId);
+			if (!hard) {
+				return await this.repository.softDelete(userId);
+			}
+
+			return await this.repository.delete(userId);
 		} catch (error: any) {
 			throw error.toString();
 		}
